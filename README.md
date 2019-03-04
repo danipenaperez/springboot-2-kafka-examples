@@ -31,26 +31,7 @@ The first is configure our KafkaProducerConfig configuration Bean, the code is s
 private KafkaTemplate<String, String> kafkaTemplate;
 ```
 
-The KafkaConsumerConfig is easy readable. Are added a featured properties which enables that manage ACK ourselve.
-
-
-```
-...
-props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);//Enables manual ACK MODE 
-...
-
-
-...
-factory.getContainerProperties().setAckMode(AckMode.MANUAL_IMMEDIATE);//Enables manual ACK MODE 
-...
-```
-After that we are able to inject Acknowledgment ack as input argument at Kafka Listener signature methods. The Message Headers info is added too, th
-
-```
-@KafkaListener(topics = {"topic1", "topic2"}, groupId = "foo")
-public void listen(@Payload String message, @Headers Map<String, String> messageHeaders, final Acknowledgment ack) {
-
-```
+The KafkaConsumerConfig is easy readable. 
 
 
 ## Running the tests
@@ -179,9 +160,70 @@ https://www.baeldung.com/java-restart-spring-boot-app
 
 ```
 
+## Groups And Partitions
+**Groups**
+Groups are diferent kind of clients that listen for a topic. 
+If you start 2 client applications with **THE SAME**  groupId listen the same topic, all acts as Queue and **ONLY ONE consumer application will receive the event**
+If you start 2 client applications with **DIFFERENT** groupId listen the same topic, all acts as Topic **ALL OF THEM will receive the event**
+
+To test the application running with different groupId, start it on this way :
+```
+java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8080 --kafka.listener.groupId=groupA
+java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8081 --kafka.listener.groupId=groupB
+```
+ 
+Now you can publish messages using the http api (one on 8080 and 8081), and you will see that the two services receive the message.
+
+**Partitions**
+Kafka on received an event, store it on diferent partitions (using round-robin) unless you specified the target partition, It is useful when you want to put focus on performance.
+All consumers in a consumer group are assigned a set of partitions, under two conditions : no two consumers in the same group have any partition in common - and the consumer group as a whole is assigned every existing partition.
+
+
+
+## Dealing with ACKNOWLEDGE 
+Sometimes , we want to manage programatically the ACK process. Imagine that our service receive the event, but fails when to process it ... we don't want lost the message and we let another process take care of it. So our "failing" process never send the ack. 
+To enable this behaviour change this 
+```
+...
+props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);//Enables manual ACK MODE 
+...
+
+
+...
+factory.getContainerProperties().setAckMode(AckMode.MANUAL_IMMEDIATE);//Enables manual ACK MODE 
+...
+```
+After that we are able to inject Acknowledgment ack as input argument at Kafka Listener signature methods. The Message Headers info is added too, th
+
+```
+@KafkaListener(topics = {"topic1", "topic2"}, groupId = "foo")
+public void listen(@Payload String message, @Headers Map<String, String> messageHeaders, final Acknowledgment ack) {
+	try{
+		//some logic
+		//if not fails , send the ack:
+
+		ack.acknowledge();//Knowledge is done
+
+	}catch(Exception e){
+		//nothing , no ack is send
+	}
+
+
+}
+```
+
+## TIME TO LIVE MESSAGES (TTL)
+Usually is helpful to set the message Time To live if is not consumed. By default is a week , but to specified a value for it, use:
+
+KafkaPRoducerConfig.java 
+
+configProps.put(TopicConfig.DELETE_RETENTION_MS_CONFIG, TimeUnit.DAYS.toMillis(1l));//TTL
+
+
+
 ## Perpetrated
 
-* **Me, the ugly and the bad** - *Initial work* - [PurpleBooth](https://github.com/danipenaperez)
+* **Me, the ugly and the bad** - *Initial work* - [danipenaperez](https://github.com/danipenaperez)
 
 
 ## License
@@ -190,7 +232,5 @@ This project for educational purpose
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* Rayo vallecano de Madrid, and Jesus "magic" Diego Cota 
 
