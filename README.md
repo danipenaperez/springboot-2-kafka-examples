@@ -139,6 +139,15 @@ https://docs.spring.io/autorepo/docs/spring-kafka-dist/2.0.4.RELEASE/reference/h
 
 ```
 
+The best way to test this app tutorial is running this code as 2 different process, and play changing the properties/topics/groups and other configurations.
+You can start some process in different terminals, using parametrized startup
+
+```
+java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8080 --kafka.listener.groupId=groupA
+java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8081 --kafka.listener.groupId=groupB
+```
+
+
 ## HTTP CONTROLLERS TO PLAY WITH THE APP
 
 Are created Controllers to test and manage the app
