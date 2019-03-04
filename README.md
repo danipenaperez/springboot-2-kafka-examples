@@ -213,8 +213,8 @@ If you start 2 client applications with **DIFFERENT** groupId listen the same to
 
 To test the application running with different groupId, start it on this way :
 ```
-java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8080 --kafka.listener.groupId=groupA
-java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8081 --kafka.listener.groupId=groupB
+java -jar ./target/serviceKafka-0.0.1-SNAPSHOT.jar --server.port=8080 --kafka.listener.groupId=groupA
+java -jar ./target/serviceKafka-0.0.1-SNAPSHOT.jar --server.port=8081 --kafka.listener.groupId=groupB
 ```
  
 Now you can publish messages using the http api (one on 8080 and 8081), and you will see that the two services receive the message.
@@ -277,5 +277,5 @@ This project for educational purpose
 
 ## Acknowledgments
 
-* Rayo vallecano de Madrid, and Jesus "magic" Diego Cota 
+* my family, coutry picking and black metal scene.
 
