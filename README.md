@@ -5,7 +5,6 @@ Spring Boot 2 using (dockerized kafka/zookeeper) Consumes, Produces , etc..
 
 Maven and Java. 
 
-### Explanation
 To integrate our Spring boot project we need these maven dependencies:
 
 ```
@@ -18,6 +17,8 @@ To integrate our Spring boot project we need these maven dependencies:
 ```
 Other dependencies such as lombok was added to avoid boilerplate code.
 
+### The Producer Messages Configuration
+
 The first is configure our KafkaProducerConfig configuration Bean, the code is self explained at KafkaProducerConfig.java and then you will be able to inject a KafkaTemplate that provides mechanish to publish messages and get notified callback methods
 
 ```	
@@ -25,7 +26,7 @@ The first is configure our KafkaProducerConfig configuration Bean, the code is s
 private KafkaTemplate<String, String> kafkaTemplate;
 ```
 
-The KafkaConsumerConfig is easy readable. 
+The KafkaConsumerConfig is.java easy readable. 
 
 
 ## Running the tests
