@@ -1,15 +1,9 @@
 # springboot-2-kafka-examples
 Spring Boot 2 using (dockerized kafka/zookeeper) Consumes, Produces , etc..
 
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 ### Prerequisites
 
 Maven and Java. 
-
-
 
 ### Explanation
 To integrate our Spring boot project we need these maven dependencies:
