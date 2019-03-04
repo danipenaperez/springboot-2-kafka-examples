@@ -22,16 +22,53 @@ Other dependencies such as lombok was added to avoid boilerplate code.
 The first is configure our KafkaProducerConfig configuration Bean, the code is self explained at KafkaProducerConfig.java and then you will be able to inject a KafkaTemplate that provides mechanish to publish messages and get notified callback methods
 
 ```	
+@Bean
+public ProducerFactory<String, String> producerFactory() {
+	Map<String, Object> configProps = new HashMap<>();
+	configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+	configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+	configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+	configProps.put(TopicConfig.DELETE_RETENTION_MS_CONFIG, TimeUnit.DAYS.toMillis(1l));//Set global TTL
+	//or further configuration params
+	return new DefaultKafkaProducerFactory<>(configProps);
+}
+
 @Autowired
 private KafkaTemplate<String, String> kafkaTemplate;
 ```
 
 The KafkaConsumerConfig is.java easy readable. 
 
+### The Consumer Messages Configuration
+Basically is create a ConsumerFactory (in this example we use ConcurrentKafkaListenerContainerFactory implementation ). After confgure and add the @EnableKafka
+Spring will create the internal context that enable to inject the @kafkaListener annotations in our classes method that handle the incoming messages.
+
+```	
+@EnableKafka 
+...
+@Bean
+public ConsumerFactory<String, String> consumerFactory() {
+	Map<String, Object> props = new HashMap<>();
+	props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+	props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+	props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+	props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+	// props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);//Enables manual ACK MODE
+	return new DefaultKafkaConsumerFactory<>(props);
+}
+
+@Bean
+public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
+	ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+	factory.setConsumerFactory(consumerFactory());
+	// factory.getContainerProperties().setAckMode(AckMode.MANUAL_IMMEDIATE);//Enables manual ACK MODE
+	return factory;
+}
+
+
+```	
 
 ## Running the tests
-
-The application 
 
 Before to run this examples, you need a Apache-Kafka+Zookeeper bundle running on your machine. The easy way is using a dockerized Apache Kafka image (that includes the zookeeper).
 
@@ -102,8 +139,7 @@ https://docs.spring.io/autorepo/docs/spring-kafka-dist/2.0.4.RELEASE/reference/h
 
 ```
 
-
-
+## HTTP CONTROLLERS TO PLAY WITH THE APP
 
 Are created Controllers to test and manage the app
 -MessageController.java): API:
@@ -126,7 +162,8 @@ Get Messages Received from a Specified Topic
 
 ```
 
-**Listening for Messages.  : is not dinamically. If you create a topic after startup you will not receive the messages**
+## DINAMICALLY SUBSCRIPTION
+**Listening for Messages.  : is not dinamically. If you create a topic after startup you will not receive the messages immediately** . After few time, your application will be notified by kafka server and will listen for the new topics (reconfiguration), but maybe you lost some messages.
 
 At Startup traces, will see ** KafkaMessageListenerContainer    : partitions assigned: [TopicStart1-0, TopicStart4-0, TopicStart5-0, TopicStart2-0, TopicStart3-0] **  but after that no listeners where added, so if othe process create the TopicStart6 , you will NOT receive the message even though the app is listening using the wildCard TopicStart.* 
 
