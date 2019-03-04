@@ -163,34 +163,38 @@ Get Messages Received from a Specified Topic
 ```
 
 ## DINAMICALLY SUBSCRIPTION
-**Listening for Messages.  : is not dinamically. If you create a topic after startup you will not receive the messages immediately** . After few time, your application will be notified by kafka server and will listen for the new topics (reconfiguration), but maybe you lost some messages.
+**Listening for Messages.  : is not dinamically. If you create a topic after startup you will not receive the messages immediately** . After few time (defautls 5 minutes, your application will be notified by kafka server and will listen for the new topics (reconfiguration), but maybe you lost some messages.
+
+If you publish a message on a topic that not exist before you will see this trace, and any service receive the message
+```
+2019-03-04 14:19:11.346  WARN 28733 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Error while fetching metadata with correlation id 1 : {TopicStart13=LEADER_NOT_AVAILABLE}
+
+So not exist a leader on topic groud that is listening this Topic already. At kafka serve traces we can read:
+
+Updated PartitionLeaderEpoch. New: {epoch:0, offset:0}, Current: {epoch:-1, offset:-1} for Partition: TopicStart13-0. Cache now contains 0 entries. (kafka.server.epoch.LeaderEpochFileCache
+```
+
 
 At Startup traces, will see ** KafkaMessageListenerContainer    : partitions assigned: [TopicStart1-0, TopicStart4-0, TopicStart5-0, TopicStart2-0, TopicStart3-0] **  but after that no listeners where added, so if othe process create the TopicStart6 , you will NOT receive the message even though the app is listening using the wildCard TopicStart.* 
 
-
-To solve this behaviour Spring have to reload application context, to reinitialize Kafka subscriptors using the wildCard and create the configuration again.
-If you need this behaviour, add actuator restart endpoints
+After few time we see a message Coordinator on our Application:
 ```
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-
-Enable the Rest endpointManagement in properties configuration
-
-management.endpoint.restart.enabled=true
-
-And Request this path  to restart 
-
-curl -X POST localhost:port/restart
-
-
-
-or using another way to reboot your Spring Boot application context 
-
-https://www.baeldung.com/java-restart-spring-boot-app
-
+2019-03-04 14:23:48.590  INFO 28776 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-1, groupId=groupB] Revoking previously assigned partitions [TopicStart4-0, TopicStart5-0, TopicStart2-0, TopicStart11-0, TopicStart3-0, TopicStart12-0, TopicStart8-0, TopicStart10-0, TopicStart9-0, TopicStart6-0, TopicStart7-0, TopicStart1-0]
+2019-03-04 14:23:48.590  INFO 28776 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : partitions revoked: [TopicStart4-0, TopicStart5-0, TopicStart2-0, TopicStart11-0, TopicStart3-0, TopicStart12-0, TopicStart8-0, TopicStart10-0, TopicStart9-0, TopicStart6-0, TopicStart7-0, TopicStart1-0]
+2019-03-04 14:23:48.590  INFO 28776 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-1, groupId=groupB] (Re-)joining group
+2019-03-04 14:23:48.591  INFO 28776 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-1, groupId=groupB] Successfully joined group with generation 7
+2019-03-04 14:23:48.592  INFO 28776 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-1, groupId=groupB] Setting newly assigned partitions [TopicStart13-0, TopicStart4-0, TopicStart5-0, TopicStart11-0, TopicStart2-0, TopicStart12-0, TopicStart3-0, TopicStart8-0, TopicStart10-0, TopicStart9-0, TopicStart6-0, TopicStart7-0, TopicStart1-0]
+2019-03-04 14:23:48.595  INFO 28776 --- [ntainer#0-0-C-1] o.a.k.c.consumer.internals.Fetcher       : [Consumer clientId=consumer-1, groupId=groupB] Resetting offset for partition TopicStart13-0 to offset 1.
+2019-03-04 14:23:48.595  INFO 28776 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : partitions assigned: [TopicStart13-0, TopicStart4-0, TopicStart5-0, TopicStart11-0, TopicStart2-0, TopicStart12-0, TopicStart3-0, TopicStart8-0, TopicStart10-0, TopicStart9-0, TopicStart6-0, TopicStart7-0, TopicStart1-0]
 ```
+
+The message **Successfully joined group with generation 7** and **Setting newly assigned partitions [..** and you will see that the app rejoined and willl start to receive from the new Topic that matchs with the TopicPattern. GOOD!  (but maybe we lost some messages in this interval.)
+
+**Dealing with ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG and ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG will get you able to adjust this time.**
+When a App in the same group leaves the kafka cluster, the coordiator event is fired too. The kafka Server has properties to block the min and max values for the session for the different clients that wants to connect (group.min.session.timeout.ms and group.max.session.timeout.ms)
+
+
+
 
 ## Groups And Partitions
 **Groups**
