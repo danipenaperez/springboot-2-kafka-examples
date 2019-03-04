@@ -95,7 +95,7 @@ so we need to bind this hostname  address to 127.0.0.1 in our /etc/hosts (or win
 Now Run the Java Spring Boot APP.
 
 ```
-ServiceAApplication.java > Run As Java Application 
+KafkaExampleApplication.java > Run As Java Application 
   or 
 $ mvn spring-boot:run
 ```
@@ -143,8 +143,8 @@ The best way to test this app tutorial is running this code as 2 different proce
 You can start some process in different terminals, using parametrized startup
 
 ```
-java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8080 --kafka.listener.groupId=groupA
-java -jar ./target/serviceA-0.0.1-SNAPSHOT.jar --server.port=8081 --kafka.listener.groupId=groupB
+java -jar ./target/serviceKafka-0.0.1-SNAPSHOT.jar --server.port=8080 --kafka.listener.groupId=groupA
+java -jar ./target/serviceKafka-0.0.1-SNAPSHOT.jar --server.port=8081 --kafka.listener.groupId=groupB
 ```
 
 
